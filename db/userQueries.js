@@ -2,16 +2,20 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-async function create(email, hash, username, nameString) {
-  const name = nameString.length > 0 ? nameString : null;
-  await prisma.user.create({
-    data: {
-      username,
-      email,
-      name,
-      hash,
-    },
-  });
+async function create(email, hash, username, name) {
+  try {
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        name,
+        hash,
+      },
+    });
+    return user;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 async function deleteSingle(id) {

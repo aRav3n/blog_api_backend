@@ -54,26 +54,38 @@ const create = [
       return res.status(422).json({ errors: errors.array() });
     }
 
+    // verify that the email is unique
     const email = req.body.email;
-    const username = req.body.username;
-    const nameString = req.body.name.length > 0 ? req.body.name : null;
+    const usersWithThisEmail = await db.readSingleFromEmail(email);
+    const emailIsUnique = usersWithThisEmail.length === 0 ? true : false;
 
-    const password = req.body.password;
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
+    if (emailIsUnique) {
+      const username = req.body.username;
+      const nameString = req.body.name.length > 0 ? req.body.name : null;
 
-    await db.create(email, hash, username, nameString);
-    return;
+      const password = req.body.password;
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(password, salt);
+
+      const user = await db.create(email, hash, username, nameString);
+      console.log(user);
+      return res.send(user);
+    }
+    console.log("sorry this email isn't unique");
+    return res
+      .status(409)
+      .json({ errors: ["a user with this email already exists"] });
   },
 ];
 
 async function deleteSingle(req, res) {
+  console.log(req.body);
   // need to get the id somehow
   const id = 0;
 
   // first need to verify that this is the user that is logged in
   // boolean set to true for now
-  const loggedIn = true;
+  const loggedIn = false;
 
   if (loggedIn) {
     await db.deleteSingle(id);
@@ -92,8 +104,9 @@ async function readFromEmail(req, res) {
   const passwordIsValid = bcrypt.compareSync(password, user.hash);
 
   if (passwordIsValid) {
-    return user;
+    return res.send(user);
   }
+  console.error("incorrect password");
   return;
 }
 
@@ -166,4 +179,7 @@ module.exports = {
   create,
   deleteSingle,
   readFromEmail,
+  readFromId,
+  updateInfo,
+  updatePassword,
 };
