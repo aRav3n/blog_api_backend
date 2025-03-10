@@ -18,10 +18,26 @@ async function create(email, hash, username, name) {
   }
 }
 
-async function deleteSingle(id) {
-  await prisma.user.delete({
+async function readSingleFromId(id) {
+  const user = await prisma.user.findFirst({
     where: { id },
   });
+  return user;
+}
+
+async function deleteSingle(id) {
+  try {
+    const user = await readSingleFromId(id);
+    if (!user) {
+      return false;
+    }
+    await prisma.user.delete({
+      where: { id },
+    });
+    return true;
+  } catch (error) {
+    return error;
+  }
 }
 
 async function readSingleFromEmail(email) {
@@ -31,29 +47,39 @@ async function readSingleFromEmail(email) {
   return user;
 }
 
-async function readSingleFromId(id) {
-  const user = await prisma.user.findFirst({
-    where: { id },
-  });
-  return user;
-}
-
 async function updateInfo(id, newEmail, newUsername, newName) {
-  const currentUser = await readSingleFromId(userId);
+  const currentUser = await readSingleFromId(id);
+  if (!currentUser) {
+    return false;
+  }
   const email = newEmail.length > 0 ? newEmail : currentUser.email;
   const username = newUsername.length > 0 ? newUsername : currentUser.username;
-  const name = newName.length > 0 ? newName : currentUser.name;
+
+  let name;
+  if (newName) {
+    name = newName;
+  } else if (currentUser.name) {
+    name = currentUser.name;
+  } else name = null;
+
   await prisma.user.update({
     where: { id },
     data: { email, username, name },
   });
+
+  return true;
 }
 
 async function updatePassword(id, hash) {
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id },
     data: { hash },
   });
+  const length = Object.keys(user).length;
+  if (length === 0) {
+    return false;
+  }
+  return true;
 }
 
 module.exports = {

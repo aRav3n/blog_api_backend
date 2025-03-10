@@ -68,10 +68,8 @@ const create = [
       const hash = bcrypt.hashSync(password, salt);
 
       const user = await db.create(email, hash, username, nameString);
-      console.log(user);
-      return res.send(user);
+      return res.status(201).json(user);
     }
-    console.log("sorry this email isn't unique");
     return res
       .status(409)
       .json({ errors: ["a user with this email already exists"] });
@@ -79,22 +77,26 @@ const create = [
 ];
 
 async function deleteSingle(req, res) {
-  console.log(req.body);
   // need to get the id somehow
-  const id = 0;
+  const id = 5;
 
   // first need to verify that this is the user that is logged in
   // boolean set to true for now
-  const loggedIn = false;
-
-  if (loggedIn) {
-    await db.deleteSingle(id);
-    return res.status(200);
+  const loggedIn = true;
+  if (!loggedIn) {
+    return res
+      .status(401)
+      .json({ errors: ["you have to be logged in to access that"] });
   }
 
-  // then do I need to do a res.redirect? Need to look into how the API backend works
+  const success = await db.deleteSingle(id);
+  if (!success) {
+    return res
+      .status(404)
+      .json({ errors: [`user with an id of ${id} not found`] });
+  }
 
-  return res.status(403);
+  return res.sendStatus(204);
 }
 
 async function readFromEmail(req, res) {
@@ -105,10 +107,10 @@ async function readFromEmail(req, res) {
   const passwordIsValid = bcrypt.compareSync(password, user.hash);
 
   if (passwordIsValid) {
-    return res.send(user);
+    return res.status(200).json(user);
   }
-  console.error("incorrect password");
-  return;
+
+  return res.status(403).json({ errors: ["invalid password"] });
 }
 
 async function readFromId(req, res) {
@@ -118,10 +120,13 @@ async function readFromId(req, res) {
   const loggedIn = true;
 
   if (loggedIn) {
-    db.readSingleFromId(id);
+    const user = await db.readSingleFromId(id);
+    return res.status(200).json(user);
   }
 
-  return;
+  return res
+    .status(401)
+    .json({ errors: ["you have to be logged in to access that"] });
 }
 
 const updateInfo = [
@@ -133,19 +138,27 @@ const updateInfo = [
     }
 
     // need to get the id somehow
-    const id = 0;
+    const id = 1;
 
     // need to verify that this is the user that is logged in
     // boolean set to true for now
     const loggedIn = true;
-
-    if (loggedIn) {
-      const email = req.body.email;
-      const username = req.body.username;
-      const nameString = req.body.name;
-      await db.updateInfo(id, email, username, nameString);
+    if (!loggedIn) {
+      return res
+        .status(401)
+        .json({ errors: ["you have to be logged in to access that"] });
     }
-    return;
+    const email = req.body.email;
+    const username = req.body.username;
+    const nameString = req.body.name;
+    const success = await db.updateInfo(id, email, username, nameString);
+    if (!success) {
+      return res
+        .status(404)
+        .json({ errors: [`user with an id of ${id} not found`] });
+    }
+
+    return res.status(201);
   },
 ];
 
@@ -158,21 +171,30 @@ const updatePassword = [
     }
 
     // need to get the id somehow
-    const id = 0;
+    const id = 1;
 
     // need to verify that this is the user that is logged in
     // boolean set to true for now
     const loggedIn = true;
-
-    if (loggedIn) {
-      const password = req.body.password;
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(password, salt);
-
-      await db.updatePassword(id, hash);
+    if (!loggedIn) {
+      return res
+        .status(401)
+        .json({ errors: ["you have to be logged in to access that"] });
     }
 
-    return;
+    const password = req.body.password;
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(password, salt);
+
+    const success = await db.updatePassword(id, hash);
+
+    if (!success) {
+      return res
+        .status(404)
+        .json({ errors: [`user with an id of ${id} not found`] });
+    }
+
+    return res.sendStatus(201);
   },
 ];
 
