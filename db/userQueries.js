@@ -34,13 +34,14 @@ async function readSingleFromId(id) {
   return user;
 }
 
-async function updateInfo(id, newEmail, newUsername) {
+async function updateInfo(id, newEmail, newUsername, newName) {
   const currentUser = await readSingleFromId(userId);
   const email = newEmail.length > 0 ? newEmail : currentUser.email;
   const username = newUsername.length > 0 ? newUsername : currentUser.username;
+  const name = newName.length > 0 ? newName : currentUser.name;
   await prisma.user.update({
     where: { id },
-    data: { email, username },
+    data: { email, username, name },
   });
 }
 
