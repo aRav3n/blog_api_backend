@@ -89,11 +89,12 @@ async function deleteSingle(req, res) {
 
   if (loggedIn) {
     await db.deleteSingle(id);
+    return res.status(200);
   }
 
   // then do I need to do a res.redirect? Need to look into how the API backend works
 
-  return;
+  return res.status(403);
 }
 
 async function readFromEmail(req, res) {
