@@ -1,7 +1,5 @@
-// const db = require("../db/queries");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
-const { log } = require("console");
 require("dotenv").config();
 
 const db = require("../db/queries").user;

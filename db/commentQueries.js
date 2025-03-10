@@ -1,15 +1,37 @@
 const { PrismaClient } = require("@prisma/client");
-
 const prisma = new PrismaClient();
 
+const userQueries = require("./userQueries");
+const postQueries = require("./postQueries");
+
 async function create(content, authorId, postId) {
-  await prisma.comment.create({
-    data: {
-      content,
-      authorId,
-      postId,
-    },
-  });
+  try {
+    const authorExists = (await userQueries.readSingleFromId(authorId))
+      ? true
+      : false;
+    if (!authorExists) {
+      return false;
+    }
+
+    const postExists = (await postQueries.readSingle(postId)) ? true : false;
+    if (!postExists) {
+      return false;
+    }
+
+    if (authorExists && postExists) {
+      await prisma.comment.create({
+        data: {
+          content,
+          authorId,
+          postId,
+        },
+      });
+      return true;
+    }
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
 
 async function deleteSingle(id) {

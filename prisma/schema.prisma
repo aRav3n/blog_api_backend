@@ -26,13 +26,13 @@ model Post {
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   content   String
-  createdAd DateTime @default(now())
+  createdAd DateTime  @default(now())
   updatedAt DateTime? @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
   authorId  Int
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id])
   postId    Int
 }
 
@@ -44,4 +44,5 @@ model User {
   email    String    @unique
   name     String?
   hash     String
+  admin    Boolean   @default(false)
 }

@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { comment } = require("./queries");
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,7 @@ async function create(email, hash, username, name) {
 }
 
 async function readSingleFromId(id) {
+  console.log("readSingleFromId called");
   const user = await prisma.user.findFirst({
     where: { id },
   });
@@ -31,9 +33,33 @@ async function deleteSingle(id) {
     if (!user) {
       return false;
     }
+    const userComments = await prisma.comment.findMany({
+      where: { authorId: id },
+    });
+    for (comment in userComments) {
+      const commentId = comment.id;
+      await prisma.comment.delete({
+        where: { id: commentId },
+      });
+    }
+
+    const userPosts = await prisma.post.findMany({
+      where: { authorId: id },
+    });
+    for (post in userPosts) {
+      const postId = post.id;
+      await prisma.post.delete({
+        where: { id: postId },
+      });
+    }
+
+    await prisma.post.delete({
+      where: { authorId: id },
+    });
     await prisma.user.delete({
       where: { id },
     });
+
     return true;
   } catch (error) {
     return error;
