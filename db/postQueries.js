@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const { comment } = require("./queries");
 
 const prisma = new PrismaClient();
 
@@ -47,7 +46,8 @@ async function deleteSingle(id) {
     const postComments = await prisma.comment.findMany({
       where: { postId: id },
     });
-    for (comment in postComments) {
+    for (let i = 0; i < postComments.length; i++) {
+      const comment = postComments[i];
       const commentId = comment.id;
       await prisma.comment.delete({
         where: { id: commentId },

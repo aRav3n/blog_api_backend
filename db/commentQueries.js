@@ -9,35 +9,38 @@ async function create(content, authorId, postId) {
     const authorExists = (await userQueries.readSingleFromId(authorId))
       ? true
       : false;
-    if (!authorExists) {
-      return false;
-    }
 
     const postExists = (await postQueries.readSingle(postId)) ? true : false;
-    if (!postExists) {
-      return false;
-    }
 
     if (authorExists && postExists) {
-      await prisma.comment.create({
+      const comment = await prisma.comment.create({
         data: {
           content,
           authorId,
           postId,
         },
       });
-      return true;
+      return comment;
     }
   } catch (error) {
     console.error(error);
-    return false;
+    return null;
   }
+  return null;
 }
 
 async function deleteSingle(id) {
-  await prisma.comment.delete({
+  const commentToDelete = await prisma.comment.findFirst({
     where: { id },
   });
+  if (!commentToDelete) {
+    return null;
+  }
+
+  const comment = await prisma.comment.delete({
+    where: { id },
+  });
+  return comment;
 }
 
 async function readRecent(qty, postId) {
@@ -49,7 +52,9 @@ async function readRecent(qty, postId) {
     take: qty,
   });
 
-  return comments;
+  const commentArray = comments ? comments : null;
+
+  return commentArray;
 }
 
 async function readSingle(id) {
@@ -61,10 +66,17 @@ async function readSingle(id) {
 }
 
 async function update(id, content) {
-  await prisma.comment.update({
+  const comment = await readSingle(id);
+  if (!comment) {
+    return null;
+  }
+
+  const updatedComment = await prisma.comment.update({
     where: { id },
     data: { content },
   });
+
+  return updatedComment;
 }
 
 module.exports = {
