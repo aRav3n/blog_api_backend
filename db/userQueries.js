@@ -2,56 +2,52 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
-async function create(email, hash, username, name) {
-  const nameString = name.length > 0 ? name : null;
+async function create(email, hash, username, nameString) {
+  const name = nameString.length > 0 ? nameString : null;
   await prisma.user.create({
     data: {
-      username: username,
-      email: email,
-      name: nameString,
-      hash: hash,
+      username,
+      email,
+      name,
+      hash,
     },
   });
 }
 
-async function deleteSingle(userId) {
+async function deleteSingle(id) {
   await prisma.user.delete({
-    where: { id: userId },
+    where: { id },
   });
 }
 
-async function readSingleFromEmail(userEmail) {
+async function readSingleFromEmail(email) {
   const user = await prisma.user.findFirst({
-    where: { email: userEmail },
+    where: { email },
   });
   return user;
 }
 
-async function readSingleFromId(userId) {
+async function readSingleFromId(id) {
   const user = await prisma.user.findFirst({
-    where: { id: userId },
+    where: { id },
   });
   return user;
 }
 
-async function updateInfo(userId, newEmail, newUsername) {
+async function updateInfo(id, newEmail, newUsername) {
   const currentUser = await readSingleFromId(userId);
-  const newUser = { ...currentUser };
-  newUser.email = newEmail.length > 0 ? newEmail : currentUser.email;
-  newUser.username =
-    newUsername.length > 0 ? newUsername : currentUser.username;
+  const email = newEmail.length > 0 ? newEmail : currentUser.email;
+  const username = newUsername.length > 0 ? newUsername : currentUser.username;
   await prisma.user.update({
-    where: { id: userId },
-    data: newUser,
+    where: { id },
+    data: { email, username },
   });
 }
 
-async function updatePassword(userId, newHash) {
-  const currentUser = await readSingleFromId(userId);
-  const newUser = { ...currentUser, hash: newHash };
+async function updatePassword(id, hash) {
   await prisma.user.update({
-    where: { id: userId },
-    data: newUser,
+    where: { id },
+    data: { hash },
   });
 }
 
