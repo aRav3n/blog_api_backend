@@ -2,50 +2,56 @@ const { body, validationResult } = require("express-validator");
 require("dotenv").config();
 
 const db = require("../db/queries").post;
+const security = require("../controllers/securityController");
 
 const validateTitle = [body("title").trim()];
 const validateContent = [body("content").trim()];
+
+async function verifyUserIsPostOwner(req, res) {
+  security.checkOwnership(req, res, "post");
+}
 
 const create = [
   validateTitle,
   validateContent,
   async (req, res) => {
-    // get author id from req
-    const id = 1;
+    const user = await security.gerUserData(req, res);
+    if (!user) {
+      return res
+        .status(403)
+        .json({ errors: ["you have to be logged in to do that"] });
+    }
 
     const title = req.body.title;
     const content = req.body.content;
     const published = req.body.published ? req.body.published : false;
 
-    const success = await db.create(title, id, content, published);
+    const success = await db.create(title, user.id, content, published);
+
     if (!success) {
       return res.status(404).json({ errors: ["unable to create the post"] });
     }
 
-    return res.status(201).json({ success: success });
+    return res.status(201).json({ success });
   },
 ];
 
 async function deleteSingle(req, res) {
-  // verify that user is admin somehow
-  const userIsAdmin = true;
-  if (!userIsAdmin) {
-    return res
-      .status(403)
-      .json({ errors: ["you don't have authorization to delete this post"] });
+  const postOwner = await verifyUserIsPostOwner(req, res);
+  if (!postOwner) {
+    return;
   }
 
-  const id = Number(req.params.postId);
-
-  const success = await db.deleteSingle(id);
+  const postId = Number(req.params.postId);
+  const success = await db.deleteSingle(postId);
 
   if (!success) {
     return res
       .status(404)
-      .json({ errors: [`post with an id of ${id} not found`] });
+      .json({ errors: [`post with an id of ${postId} not found`] });
   }
 
-  return res.sendStatus(204);
+  return res.status(200).json({ messages: ["post deleted successfully"] });
 }
 
 async function readRecent(req, res) {
@@ -64,7 +70,11 @@ const update = [
   validateContent,
   validateTitle,
   async (req, res) => {
-    const postId = Number(req.params.postId);
+    const postOwner = await verifyUserIsPostOwner(req, res);
+    if (!postOwner) {
+      return;
+    }
+
     const title = req.body.title;
     const content = req.body.content;
     const published = req.body.published;

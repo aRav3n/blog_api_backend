@@ -4,6 +4,7 @@ const router = require("./routes/router");
 
 const jwt = require("jsonwebtoken");
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

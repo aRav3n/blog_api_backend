@@ -2,8 +2,13 @@ const { body, validationResult } = require("express-validator");
 require("dotenv").config();
 
 const db = require("../db/queries").comment;
+const security = require("../controllers/securityController");
 
 const validateComment = [body("comment").trim()];
+
+async function verifyUserIsCommentOwner(req, res) {
+  security.checkOwnership(req, res, "comment");
+}
 
 const create = [
   validateComment,
@@ -11,8 +16,13 @@ const create = [
     const content = req.body.content;
     const postId = Number(req.params.postId);
 
-    // need to update these later:
-    const userId = 1;
+    const user = await security.gerUserData(req, res);
+    if (!user) {
+      return res
+        .status(403)
+        .json({ errors: ["you have to be logged in to do that"] });
+    }
+    const userId = user.id;
 
     const comment = await db.create(content, userId, postId);
     return res.status(201).json(comment);
@@ -22,8 +32,18 @@ const create = [
 async function deleteSingle(req, res) {
   const commentId = Number(req.params.commentId);
 
-  // get logged in user's id
-  const userId = 1;
+  const user = await security.gerUserData(req, res);
+  if (!user) {
+    return res
+      .status(403)
+      .json({ errors: ["you have to be logged in to do that"] });
+  }
+  const userId = user.id;
+
+  const commentOwner = await verifyUserIsCommentOwner(req, res);
+  if (!commentOwner) {
+    return;
+  }
 
   const comment = await db.readSingle(commentId);
   if (!comment) {
@@ -56,10 +76,23 @@ async function readRecentForPost(req, res) {
 }
 
 async function update(req, res) {
-  const id = Number(req.params.commentId);
+  const commentId = Number(req.params.commentId);
+
+  const user = await security.gerUserData(req, res);
+  if (!user) {
+    return res
+      .status(403)
+      .json({ errors: ["you have to be logged in to do that"] });
+  }
+
+  const commentOwner = await verifyUserIsCommentOwner(req, res);
+  if (!commentOwner) {
+    return;
+  }
+
   const content = req.body.content;
 
-  const updatedComment = await db.update(id, content);
+  const updatedComment = await db.update(commentId, content);
 
   if (!updatedComment) {
     return res.status(404).json({ errors: ["comment not found"] });

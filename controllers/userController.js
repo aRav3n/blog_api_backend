@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
 const db = require("../db/queries").user;
+const security = require("../controllers/securityController");
 
 const emailErr = "email must be a valid email";
 const pwError = "Password must be between 6 and 16 characters";
@@ -47,30 +48,43 @@ const validatePassword = [
 const create = [
   validateUser,
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
+
+      // verify that the email is unique
+      const email = req.body.email;
+      const usersWithThisEmail = await db.readSingleFromEmail(email);
+      const emailIsUnique =
+        !usersWithThisEmail || usersWithThisEmail.length === 0 ? true : false;
+
+      if (emailIsUnique) {
+        const username = req.body.username;
+        const nameString = req.body.name.length > 0 ? req.body.name : null;
+
+        const password = req.body.password;
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(password, salt);
+
+        const user = await db.create(email, hash, username, nameString);
+        const token = security.sign(user);
+
+        return res.status(201).json(token);
+      }
+      return res
+        .status(409)
+        .json({ errors: ["a user with this email already exists"] });
+    } catch (err) {
+      console.error(err);
+
+      if (err.name === "JsonWebTokenError") {
+        return res.status(500).json({ errors: ["Token generation failed"] });
+      }
+
+      return res.status(500).json({ errors: ["Server error"] });
     }
-
-    // verify that the email is unique
-    const email = req.body.email;
-    const usersWithThisEmail = await db.readSingleFromEmail(email);
-    const emailIsUnique = usersWithThisEmail.length === 0 ? true : false;
-
-    if (emailIsUnique) {
-      const username = req.body.username;
-      const nameString = req.body.name.length > 0 ? req.body.name : null;
-
-      const password = req.body.password;
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(password, salt);
-
-      const user = await db.create(email, hash, username, nameString);
-      return res.status(201).json(user);
-    }
-    return res
-      .status(409)
-      .json({ errors: ["a user with this email already exists"] });
   },
 ];
 
@@ -105,7 +119,8 @@ async function readFromEmail(req, res) {
   const passwordIsValid = bcrypt.compareSync(password, user.hash);
 
   if (passwordIsValid) {
-    return res.status(200).json(user);
+    const token = await security.sign(user);
+    return res.status(200).json({ token });
   }
 
   return res.status(403).json({ errors: ["invalid password"] });
