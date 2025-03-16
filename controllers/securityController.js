@@ -53,7 +53,8 @@ async function gerUserData(req) {
   if (authData) {
     const user = authData.user;
     user.iat = authData.iat;
-    return user;
+    const { hash, ...objectToReturn } = user;
+    return objectToReturn;
   }
   return null;
 }
@@ -74,7 +75,7 @@ function verify(req, res, next) {
 
   if (bearerHeader !== undefined) {
     const bearer = bearerHeader.split(" ");
-    const token = bearer[1];
+    const token = bearer[bearer.length - 1];
     req.token = token;
   } else {
     return res

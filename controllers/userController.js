@@ -120,7 +120,9 @@ async function readFromEmail(req, res) {
 
   if (passwordIsValid) {
     const token = await security.sign(user);
-    return res.status(200).json({ token });
+    const { hash, ...userObject } = user;
+    console.log({ user, userObject });
+    return res.status(200).json({ token, userObject });
   }
 
   return res.status(403).json({ errors: ["invalid password"] });
