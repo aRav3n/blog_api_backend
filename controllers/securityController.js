@@ -31,8 +31,24 @@ async function checkOwnership(req, res, type) {
   return true;
 }
 
+function getTokenFromReq(req) {
+  const bearerHeader = req.headers["authorization"];
+  if (bearerHeader !== undefined) {
+    const bearer = bearerHeader.split(" ");
+    const token = bearer[bearer.length - 1];
+    return token;
+  }
+  return null;
+}
+
 async function getAuthData(req) {
-  const token = req.token ? req.token : null;
+  let token = null;
+  if (req.token) {
+    token = req.token;
+  } else {
+    token = getTokenFromReq(req);
+  }
+
   if (token) {
     return new Promise((resolve, reject) => {
       jwt.verify(token, secretKey, (err, authData) => {
@@ -71,14 +87,11 @@ async function sign(user) {
 }
 
 function verify(req, res, next) {
-  const bearerHeader = req.headers["authorization"];
-
-  if (bearerHeader !== undefined) {
-    const bearer = bearerHeader.split(" ");
-    const token = bearer[bearer.length - 1];
+  const token = getTokenFromReq(req);
+  if (token) {
     req.token = token;
   } else {
-    return res
+    res
       .sendStatus(403)
       .json({ message: ["you have to be logged in to do that"] });
   }

@@ -15,7 +15,7 @@ const create = [
   validateTitle,
   validateContent,
   async (req, res) => {
-    const user = await security.gerUserData(req, res);
+    const user = await security.gerUserData(req);
     if (!user) {
       return res
         .status(403)
@@ -55,7 +55,10 @@ async function deleteSingle(req, res) {
 }
 
 async function readRecent(req, res) {
-  const qty = 10;
+  // look at adding options later
+  const qty = false;
+  const user = await security.gerUserData(req);
+
   const recentPosts = await db.readRecent(qty);
   return res.status(200).json(recentPosts);
 }

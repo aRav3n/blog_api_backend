@@ -63,13 +63,16 @@ async function deleteSingle(id) {
 }
 
 async function readRecent(qty) {
-  qty = qty ? qty : 10;
-  const posts = await prisma.post.findMany({
+  const optionsObject = {
     orderBy: {
       createdAt: "desc",
     },
-    take: qty,
-  });
+  }
+  if(qty) {
+    optionsObject.take = qty;
+  }
+
+  const posts = await prisma.post.findMany(optionsObject);
 
   return posts;
 }
