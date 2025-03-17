@@ -57,9 +57,11 @@ async function deleteSingle(req, res) {
 async function readRecent(req, res) {
   // look at adding options later
   const qty = false;
-  const user = await security.gerUserData(req);
 
-  const recentPosts = await db.readRecent(qty);
+  const user = await security.gerUserData(req);
+  const authorId = user.id;
+
+  const recentPosts = await db.readRecent(qty, authorId);
   return res.status(200).json(recentPosts);
 }
 

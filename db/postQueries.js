@@ -62,13 +62,14 @@ async function deleteSingle(id) {
   return false;
 }
 
-async function readRecent(qty) {
+async function readRecent(qty, authorId) {
   const optionsObject = {
     orderBy: {
       createdAt: "desc",
     },
-  }
-  if(qty) {
+    where: { authorId },
+  };
+  if (qty) {
     optionsObject.take = qty;
   }
 
