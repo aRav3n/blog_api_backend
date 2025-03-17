@@ -4,6 +4,8 @@ require("dotenv").config();
 
 const db = require("../db/queries").user;
 const security = require("../controllers/securityController");
+const creatorSalt = bcrypt.genSaltSync(10);
+const creatorHash = bcrypt.hashSync(process.env.CREATOR_PASSWORD, creatorSalt);
 
 const emailErr = "email must be a valid email";
 const pwError = "Password must be between 6 and 16 characters";
@@ -23,6 +25,7 @@ const validateUser = [
     })
     .withMessage(pwMatchError)
     .trim(),
+  body("creatorPassword").trim(),
 ];
 
 const validateUpdate = [
@@ -51,6 +54,7 @@ const create = [
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log(errors);
         return res.status(422).json({ errors: errors.array() });
       }
 
@@ -89,8 +93,13 @@ const create = [
 ];
 
 async function deleteSingle(req, res) {
-  // need to get the id somehow
-  const id = 5;
+    const user = await security.gerUserData(req, res);
+    if (!user) {
+      return res
+        .status(403)
+        .json({ errors: ["you have to be logged in to do that"] });
+    }
+  const id = user.id;
 
   // first need to verify that this is the user that is logged in
   // boolean set to true for now
@@ -116,15 +125,20 @@ async function readFromEmail(req, res) {
   const email = req.body.email;
 
   const user = await db.readSingleFromEmail(email);
-  const passwordIsValid = bcrypt.compareSync(password, user.hash);
+  if (user) {
+    const passwordIsValid = Object.hasOwn(user, "hash")
+      ? bcrypt.compareSync(password, user.hash)
+      : false;
 
-  if (passwordIsValid) {
-    const token = await security.sign(user);
-    const { hash, ...userObject } = user;
-    return res.status(200).json({ token, userObject });
+    if (passwordIsValid) {
+      const token = await security.sign(user);
+      const { hash, ...userObject } = user;
+      return res.status(200).json({ token, userObject });
+    }
+
+    return res.status(403).json({ errors: ["invalid password"] });
   }
-
-  return res.status(403).json({ errors: ["invalid password"] });
+  return res.status(404).json({ errors: ["no account found with this login info"] });
 }
 
 async function readFromId(req, res) {
