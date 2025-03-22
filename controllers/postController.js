@@ -8,7 +8,7 @@ const validateTitle = [body("title").trim()];
 const validateContent = [body("content").trim()];
 
 async function verifyUserIsPostOwner(req, res) {
-  security.checkOwnership(req, res, "post");
+  return await security.checkOwnership(req, res, "post");
 }
 
 const create = [
@@ -80,13 +80,15 @@ const update = [
       return;
     }
 
+    const postId = Number(req.params.postId);
     const title = req.body.title;
     const content = req.body.content;
     const published = req.body.published;
 
-    await db.update(postId, title, content, published);
 
-    return res.sendStatus(201);
+    const updatedPost = await db.update(postId, title, content, published);
+
+    return res.status(201).json(updatedPost);
   },
 ];
 

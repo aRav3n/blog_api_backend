@@ -4,6 +4,17 @@ const query = require("../db/queries");
 
 const secretKey = process.env.SECRET_KEY;
 
+async function gerUserData(req) {
+  const authData = await getAuthData(req);
+  if (authData) {
+    const user = authData.user;
+    user.iat = authData.iat;
+    const { hash, ...objectToReturn } = user;
+    return objectToReturn;
+  }
+  return null;
+}
+
 async function checkOwnership(req, res, type) {
   const db = query[type];
   const idString = `${type}Id`;
@@ -62,17 +73,6 @@ async function getAuthData(req) {
       });
     });
   }
-}
-
-async function gerUserData(req) {
-  const authData = await getAuthData(req);
-  if (authData) {
-    const user = authData.user;
-    user.iat = authData.iat;
-    const { hash, ...objectToReturn } = user;
-    return objectToReturn;
-  }
-  return null;
 }
 
 async function sign(user) {
