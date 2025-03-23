@@ -57,8 +57,9 @@ async function deleteSingle(req, res) {
 async function readAll(req, res) {
   // look at adding options later
   const qty = false;
+  const authorId = false;
 
-  const recentPosts = await db.readRecent();
+  const recentPosts = await db.readRecent(qty, authorId);
   return res.status(200).json(recentPosts);
 }
 
@@ -74,7 +75,7 @@ async function readRecent(req, res) {
 }
 
 async function readSingle(req, res) {
-  const postId = Number(req.params.postId);
+  const postId = req.params.postId ? Number(req.params.postId) : null;
   const post = await db.readSingle(postId);
   return res.status(200).json(post);
 }
@@ -92,7 +93,6 @@ const update = [
     const title = req.body.title;
     const content = req.body.content;
     const published = req.body.published;
-
 
     const updatedPost = await db.update(postId, title, content, published);
 

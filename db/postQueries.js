@@ -26,11 +26,20 @@ async function create(title, authorId, contentString, publishedBoolean) {
 }
 
 async function readSingle(id) {
-  const post = await prisma.post.findFirst({
-    where: {
-      id,
+  const findObject = {
+    orderBy: {
+      createdAt: "desc",
     },
-  });
+    take: 1,
+  };
+  if (id) {
+    findObject.where = {
+      id,
+    };
+  } else {
+  }
+
+  const post = await prisma.post.findFirst(findObject);
 
   if (!post) {
     return null;
@@ -63,6 +72,7 @@ async function deleteSingle(id) {
 }
 
 async function readRecent(qty, authorId) {
+  const hideUnpublishedPosts = authorId ? false : true;
   const optionsObject = {
     orderBy: {
       createdAt: "desc",
@@ -71,7 +81,9 @@ async function readRecent(qty, authorId) {
   if (qty) {
     optionsObject.take = qty;
   }
-  if (authorId) {
+  if (hideUnpublishedPosts) {
+    optionsObject.where = { published: true };
+  } else {
     optionsObject.where = { authorId: authorId };
   }
 
