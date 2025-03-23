@@ -15,7 +15,10 @@ const create = [
   async (req, res) => {
     const content = req.body.content;
     const postId = Number(req.params.postId);
+    // console.log({ content, postId });
 
+    // currently not requiring a login to post a comment
+    /*
     const user = await security.gerUserData(req, res);
     if (!user) {
       return res
@@ -23,8 +26,9 @@ const create = [
         .json({ errors: ["you have to be logged in to do that"] });
     }
     const userId = user.id;
+    */
 
-    const comment = await db.create(content, userId, postId);
+    const comment = await db.create(content, null, postId);
     return res.status(201).json(comment);
   },
 ];
@@ -64,7 +68,7 @@ async function deleteSingle(req, res) {
 }
 
 async function readRecentForPost(req, res) {
-  const qty = 10;
+  const qty = false;
   const postId = Number(req.params.postId);
   const comments = await db.readRecent(qty, postId);
 

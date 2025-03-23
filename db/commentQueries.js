@@ -6,17 +6,21 @@ const postQueries = require("./postQueries");
 
 async function create(content, authorId, postId) {
   try {
+    // currently not requiring a login to view and comment
+    /*
     const authorExists = (await userQueries.readSingleFromId(authorId))
       ? true
       : false;
+      */
 
     const postExists = (await postQueries.readSingle(postId)) ? true : false;
 
-    if (authorExists && postExists) {
+    if (postExists) {
       const comment = await prisma.comment.create({
         data: {
           content,
-          authorId,
+          // currently not requiring an account to post a comment
+          // authorId,
           postId,
         },
       });
@@ -44,13 +48,16 @@ async function deleteSingle(id) {
 }
 
 async function readRecent(qty, postId) {
-  const comments = await prisma.comment.findMany({
+  const findObject = {
     where: { postId },
     orderBy: {
       createdAd: "desc",
     },
-    take: qty,
-  });
+  };
+  if (qty) {
+    findObject.take = qty;
+  }
+  const comments = await prisma.comment.findMany(findObject);
 
   const commentArray = comments ? comments : null;
 
