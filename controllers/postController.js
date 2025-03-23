@@ -54,6 +54,14 @@ async function deleteSingle(req, res) {
   return res.status(200).json({ messages: ["post deleted successfully"] });
 }
 
+async function readAll(req, res) {
+  // look at adding options later
+  const qty = false;
+
+  const recentPosts = await db.readRecent();
+  return res.status(200).json(recentPosts);
+}
+
 async function readRecent(req, res) {
   // look at adding options later
   const qty = false;
@@ -95,6 +103,7 @@ const update = [
 module.exports = {
   create,
   deleteSingle,
+  readAll,
   readRecent,
   readSingle,
   update,

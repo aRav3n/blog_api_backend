@@ -67,10 +67,12 @@ async function readRecent(qty, authorId) {
     orderBy: {
       createdAt: "desc",
     },
-    where: { authorId },
   };
   if (qty) {
     optionsObject.take = qty;
+  }
+  if (authorId) {
+    optionsObject.where = { authorId: authorId };
   }
 
   const posts = await prisma.post.findMany(optionsObject);
