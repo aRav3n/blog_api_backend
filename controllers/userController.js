@@ -93,22 +93,13 @@ const create = [
 ];
 
 async function deleteSingle(req, res) {
-    const user = await security.gerUserData(req, res);
-    if (!user) {
-      return res
-        .status(403)
-        .json({ errors: ["you have to be logged in to do that"] });
-    }
-  const id = user.id;
-
-  // first need to verify that this is the user that is logged in
-  // boolean set to true for now
-  const loggedIn = true;
-  if (!loggedIn) {
+  const user = await security.gerUserData(req, res);
+  if (!user) {
     return res
-      .status(401)
-      .json({ errors: ["you have to be logged in to access that"] });
+      .status(403)
+      .json({ errors: ["you have to be logged in to do that"] });
   }
+  const id = user.id;
 
   const success = await db.deleteSingle(id);
   if (!success) {
@@ -116,6 +107,7 @@ async function deleteSingle(req, res) {
       .status(404)
       .json({ errors: [`user with an id of ${id} not found`] });
   }
+  console.log(success);
 
   return res.sendStatus(204);
 }
@@ -138,7 +130,9 @@ async function readFromEmail(req, res) {
 
     return res.status(403).json({ errors: ["invalid password"] });
   }
-  return res.status(404).json({ errors: ["no account found with this login info"] });
+  return res
+    .status(404)
+    .json({ errors: ["no account found with this login info"] });
 }
 
 async function readFromId(req, res) {

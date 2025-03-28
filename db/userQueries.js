@@ -18,7 +18,6 @@ async function create(email, hash, username, name) {
 }
 
 async function readSingleFromId(id) {
-  console.log("readSingleFromId called");
   const user = await prisma.user.findFirst({
     where: { id },
   });
@@ -32,34 +31,16 @@ async function deleteSingle(id) {
       return false;
     }
 
-    const userComments = await prisma.comment.findMany({
+    await prisma.comment.deleteMany({
       where: { authorId: id },
     });
-    for (let i = 0; i < userComments.length; i++) {
-      const comment = userComments[i];
-      const commentId = comment.id;
-      await prisma.comment.delete({
-        where: { id: commentId },
-      });
-    }
-
-    const userPosts = await prisma.post.findMany({
-      where: { authorId: id },
-    });
-    for (let i = 0; i < userPosts.length; i++) {
-      const post = userPosts[i];
-      const postId = post.id;
-      await prisma.post.delete({
-        where: { id: postId },
-      });
-    }
-
-    await prisma.post.delete({
+    await prisma.post.deleteMany({
       where: { authorId: id },
     });
     await prisma.user.delete({
       where: { id },
     });
+    console.log("user should now be deleted:", user);
 
     return true;
   } catch (error) {
