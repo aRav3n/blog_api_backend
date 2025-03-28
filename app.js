@@ -3,7 +3,10 @@ const app = express();
 const router = require("./routes/router");
 const cors = require("cors");
 
-const allowList = ["http://localhost:5173"];
+const allowList = [
+  "https://blog-api-frontend-creator.pages.dev/",
+  "https://blog-api-frontend-viewer.pages.dev/",
+];
 const corsOptions = {
   origins: allowList,
   methods: ["GET", "POST", "PUT", "DELETE"],
